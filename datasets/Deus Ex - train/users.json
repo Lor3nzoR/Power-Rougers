@@ -1,0 +1,170 @@
+[
+  {
+    "first_name": "Guido",
+    "last_name": "Döhn",
+    "birth_year": 2065,
+    "salary": 12700,
+    "job": "Student",
+    "iban": "DE74X8794356022735306376013",
+    "residence": {
+      "city": "Wiesbaden",
+      "lat": "50.0825",
+      "lng": "8.2400"
+    },
+    "description": "Guido Döhn ist ein 22-jähriger Student aus Wiesbaden (geboren 2065), der hier sein Studium absolviert und nebenbei etwa 12.700 Euro im Jahr verdient; er lebt im Rhythmus einer kleinen Großstadt, reist ungefähr zweimal jährlich — manchmal nur kurz in die Nähe, manchmal bis zu 15.000 km weit — und hat Reiseziele, die von Orten mit wenigen tausend Einwohnern bis hin zu Megametropolen mit bis zu 45 Millionen Menschen reichen; im Netz ist er nicht immer vorsichtig: auf Phishing-Nachrichten klickt er mit einer geschätzten Wahrscheinlichkeit von rund 50 Prozent, was ihn zu jemandem macht, der neugierig und aufgeschlossen, aber gelegentlich zu leichtgläubig gegenüber digitalen Angeboten ist."
+  },
+  {
+    "first_name": "Aimée",
+    "last_name": "Blondel",
+    "birth_year": 2046,
+    "salary": 29500,
+    "job": "Administrative Assistant",
+    "iban": "FR90R8489055650539701833516",
+    "residence": {
+      "city": "Paris",
+      "lat": "48.8567",
+      "lng": "2.3522"
+    },
+    "description": "Aimée Blondel, née en 2046, a 41 ans et vit à Paris où elle travaille comme assistante administrative; son salaire annuel tourne autour de 29 500 €, un revenu modeste qui façonne sa manière de vivre et de prévoir les choses: sa journée se partage entre dossiers, réunions et trajets en métro, avec une attention au détail propre à son métier d'employée \"classique\", et pourtant elle se permet six voyages par an — parfois de courtes escapades proches, parfois des liaisons lointaines jusqu'à 15 000 km, vers des lieux allant de villages de quelques milliers d'habitants à des mégapoles de 45 millions; elle connaît la ville, apprécie les cafés matinaux avant d'entrer au bureau et, malgré son sérieux professionnel, reste parfois trop confiante face aux messages numériques, avec une probabilité estimée à 49 % de cliquer sur un piège de phishing, une faiblesse qu'elle commence à vouloir corriger."
+  },
+  {
+    "first_name": "Bernt",
+    "last_name": "Mies",
+    "birth_year": 2005,
+    "salary": 29600,
+    "job": "Retired",
+    "iban": "DE60P8383513020579134833709",
+    "residence": {
+      "city": "Arnsberg",
+      "lat": "51.3833",
+      "lng": "8.0833"
+    },
+    "description": "Bernt Mies, Jahrgang 2005, lebt als 82‑jähriger Ruheständler und Hausmann in Arnsberg im Sauerland und führt einen ruhigen, handfesten Alltag: morgens Kaffee, Brotzeit selbst belegt, dann Hausarbeiten, der kleine Garten hinterm Haus und gelegentliche Reparaturen, zwischendurch liest er lokale Nachrichten auf dem Tablet oder hört das Regionalradio, nachmittags ein Spaziergang durch den Wald oder ein Bummel über den Markt in der Altstadt; seine Rente von rund 29.600 Euro im Jahr erlaubt ihm einen bescheidenen, aber sorgenfreien Lebensstil, er kocht gern einfach und teilt gelegentlich eine Mahlzeit mit Nachbarn oder der Familie, die ihn nutzen, wenn sie in die Stadt kommen. Einmal im Jahr bricht er zu einer Reise auf – manchmal an die Küste, manchmal in eine größere Stadt oder zu einem Familientreffen, die Ziele sind unterschiedlich groß und können nahe oder auch fern sein – und im Digitalen ist er freundlich und vertraut, weshalb er bei komplizierten E‑Mails öfter die Enkel um Rat fragt, nachdem ihn schon mal eine fragwürdige Nachricht irritiert hat; insgesamt ist Bernt jemand, der sein Leben praktisch organisiert, die kleinen Routinen schätzt und in Arnsberg gut verankert ist."
+  },
+  {
+    "first_name": "Julie",
+    "last_name": "Parker",
+    "birth_year": 2004,
+    "salary": 26700,
+    "job": "Retired",
+    "iban": "US73J9650405635383123411206",
+    "residence": {
+      "city": "Aurora",
+      "lat": "39.7083",
+      "lng": "-104.7237"
+    },
+    "description": "Julie Parker, born in 2004, is an 83-year-old retired homemaker living in Aurora; she keeps a modest household on about $26,700 a year, tending a small garden and the rhythms of home while volunteering now and then, and she still takes two trips a year—everything from short drives to nearby towns to occasional long-haul journeys up to roughly 15,000 km, visiting places that range from thousand-person communities to vast megacities—and though she manages basic tech for banking and staying in touch, she's a bit trusting online and sometimes clicks on dubious links, relying mostly on neighborhood friends and familiar routines to shape her days."
+  },
+  {
+    "first_name": "Joséphine",
+    "last_name": "Imbert",
+    "birth_year": 2065,
+    "salary": 15000,
+    "job": "Student",
+    "iban": "FR31S2063414610415586638765",
+    "residence": {
+      "city": "Tonneins",
+      "lat": "44.3906",
+      "lng": "0.3092"
+    },
+    "description": "Joséphine Imbert, née en 2065 et âgée de 22 ans, est étudiante universitaire et vit à Tonneins; elle tire environ 15 000 euros par an de petits boulots et aides qui lui permettent de garder une vie modeste mais indépendante, voyage environ une fois par an — parfois pour quelques centaines de kilomètres, parfois jusqu’à 15 000 km, oscillant entre petites villes et grandes métropoles selon l'occasion — et, curieuse mais parfois un peu naïve face au monde numérique, elle a une propension non négligeable à cliquer sur des liens douteux (probabilité d'environ 50 %), ce qui la pousse à apprendre progressivement la prudence en ligne tout en poursuivant ses études et ses projets loin des projecteurs."
+  },
+  {
+    "first_name": "Salvatore",
+    "last_name": "Ladeck",
+    "birth_year": 2040,
+    "salary": 100000,
+    "job": "Investor",
+    "iban": "DE71D4674228693667840434176",
+    "residence": {
+      "city": "Munich",
+      "lat": "48.1375",
+      "lng": "11.5750"
+    },
+    "description": "Salvatore Ladeck, geboren 2040, ist ein 47-jähriger Investor und Top-Unternehmer mit Wohnsitz in München; er erzielt ein Einkommen von rund 100.000 Euro jährlich und nutzt ein deutsches Konto (IBAN DE71D4674228693667840434176), reist selten — etwa einmal im Jahr, wobei die Trips bis zu 15.000 Kilometer reichen und ihn sowohl in kleinere Orte als auch in Metropolen mit bis zu 45 Millionen Einwohnern führen können — und bewegt sich beruflich zwischen Start-up-Netzwerken und konservativen Geldgebern, trifft strategische Entscheidungen, delegiert viel und wirkt sachlich und zielorientiert, zugleich ist er gegenüber digitalen Fallen nicht ganz immun: seine Neigung, auf Phishing-Mails zu klicken, liegt bei ungefähr fünfzig Prozent."
+  },
+  {
+    "first_name": "Daniel",
+    "last_name": "Shepherd",
+    "birth_year": 2002,
+    "salary": 44000,
+    "job": "Retired",
+    "iban": "GB14R4522140264953616778153",
+    "residence": {
+      "city": "London",
+      "lat": "51.5072",
+      "lng": "-0.1275"
+    },
+    "description": "Daniel Shepherd, 85, is a retired homemaker who has made a modest life for himself in London: he runs the flat, cooks for himself and the odd neighbour, tends a compact hydroponic balcony garden and lives on a pension of roughly £44,000 a year in a city of gray towers, drone lanes and constant sensor hum. He still gets away about four times a year—short trips to coastal towns or regional green belts and, now and then, a long-haul journey up to about 15,000 km to see family or swap the city's intensity for wider horizons—his destinations range from settlements of a few thousand people to megacities of tens of millions. Technologically competent enough to use AR overlays and city apps but somewhat trusting online—he's clicked dubious links before and leans on a neighbour or the community centre for digital checks—Daniel's days are steady and practical: market shopping before remote curfew, tending plants, helping at the community kitchen now and then, and quietly planning the next trip that keeps London familiar rather than confining."
+  },
+  {
+    "first_name": "Sara",
+    "last_name": "Spencer",
+    "birth_year": 2033,
+    "salary": 46700,
+    "job": "Retail Entrepreneur",
+    "iban": "US86K4608896011535163593949",
+    "residence": {
+      "city": "Indianapolis",
+      "lat": "39.7771",
+      "lng": "-86.1458"
+    },
+    "description": "Sara Spencer, born in 2033 and now 54, is a Hoosier retail entrepreneur who keeps a modest but resilient storefront in Indianapolis where she earns about $46,700 a year, runs a tightly managed operation that mixes a physical counter with a pared-down digital presence, and lives by practical habits—opening early, haggling with suppliers, leaning on neighborhood loyalty and community events to keep the shelves moving—while taking two trips a year (one usually short within the Midwest for restocking, the other occasionally a long haul to a distant manufacturing hub or a trade show), comfortable moving between quiet towns and vast megacities when business calls; she has a pragmatic, work-first temperament and trusts technology enough to use it every day, though her tendency to accept slick online offers has cost her small setbacks, so she balances convenience with a hard-won suspicion and prefers to settle important deals face-to-face."
+  },
+  {
+    "first_name": "Juliette",
+    "last_name": "Brunet",
+    "birth_year": 2003,
+    "salary": 37000,
+    "job": "Retired",
+    "iban": "FR42B3507838827333356413981",
+    "residence": {
+      "city": "Cornebarrieu",
+      "lat": "43.6500",
+      "lng": "1.3272"
+    },
+    "description": "Juliette Brunet, née en 2003 et aujourd'hui retraitée et femme au foyer à Cornebarrieu, près de Toulouse, organise ses journées autour de la maison et des petits rituels domestiques; avec une pension d'environ 37 000 € par an elle voyage en moyenne huit fois par an — du week‑end dans un village de mille habitants aux escales dans des métropoles de plusieurs dizaines de millions, parfois jusque 15 000 km — et revient toujours au calme de son quartier; curieuse du monde numérique mais parfois trop confiante, elle clique sur près d'une sollicitation sur deux, ce qui lui vaut parfois des déconvenues, et malgré tout elle reste une présence stable et chaleureuse pour sa famille et ses voisins."
+  },
+  {
+    "first_name": "Maura",
+    "last_name": "Visconti",
+    "birth_year": 2055,
+    "salary": 35900,
+    "job": "Administrative Assistant",
+    "iban": "IT65V4906447641554316582545",
+    "residence": {
+      "city": "Brindisi",
+      "lat": "40.6383",
+      "lng": "17.9458"
+    },
+    "description": "Maura Visconti, nata nel 2055 e quindi trentadue anni nel 2087, vive a Brindisi e lavora come impiegata amministrativa con uno stipendio intorno ai 35.900 euro l'anno; le sue giornate scorrono tra pratiche, scartoffie digitali e la gestione degli imprevisti d'ufficio, ma non tutto è solo routine: si concede tre viaggi l'anno, da fughe brevi nei borghi pugliesi fino a trasferte molto più lontane — talvolta verso metropoli da milioni di abitanti, altre volte in paesini di poche migliaia, con tratte che possono arrivare fino a quindicimila chilometri —; pratica e metodica nell'organizzare conti e scadenze, Maura è curiosa verso le novità tecnologiche ma non del tutto immune alle insidie del web: una propensione a fidarsi l'ha già fatta inciampare in un tentativo di phishing, esperienza che l'ha resa più attenta senza spegnere la voglia di scoprire e muoversi."
+  },
+  {
+    "first_name": "Gabriel",
+    "last_name": "Chauvin",
+    "birth_year": 1994,
+    "salary": 26300,
+    "job": "Retired",
+    "iban": "FR33E7587255626666556950495",
+    "residence": {
+      "city": "Nantes",
+      "lat": "47.2181",
+      "lng": "-1.5528"
+    },
+    "description": "Gabriel Chauvin, né en 1994, a 93 ans en 2087 et vit à Nantes; retraité et ancien homme au foyer, il mène une vie simple et rythmée par l'entretien du domicile, les courses au marché local et de longues promenades dans les quartiers riverains, tout en s'appuyant sur une pension modeste d'environ 26 300 € par an. Il prend le temps de garder le foyer en ordre et d'aider la famille quand elle passe, et il s'accorde un voyage par an — parfois il reste chez lui, parfois il part pour des destinations proches ou lointaines (jusqu'à 15 000 km), allant aussi bien dans des petites communes que dans de grandes métropoles — mais il préfère les retours à Nantes. À l'ère numérique il se débrouille avec les écrans et les applications quotidiennes, mais il peut parfois se montrer trop confiant face à des messages inattendus, ce qui lui vaut quelques mésaventures en ligne; malgré tout, il reste ancré dans ses habitudes locales et conserve pour la ville une familiarité tranquille."
+  },
+  {
+    "first_name": "James",
+    "last_name": "Patterson",
+    "birth_year": 2060,
+    "salary": 25600,
+    "job": "Digital Creator",
+    "iban": "US81B6556270410726227697631",
+    "residence": {
+      "city": "Ceres",
+      "lat": "37.5952",
+      "lng": "-120.9620"
+    },
+    "description": "James Patterson, born in 2060 and now 27, lives in Ceres, California, and makes his living as a freelance digital creator on a modest $25,600 a year, producing practical visual and interactive work for small brands, local clients and niche platforms. He keeps his studio in a converted garage near the orchards, patches together steady commissions, licensing gigs and short-term contracts, and hops online to meet clients or fix last-minute builds; twice a year he travels for trade shows, shoots or to hand-deliver projects, sometimes to nearby towns and sometimes to megacities across the globe up to about 15,000 km away, to places that range from thousand-person hubs to conurbations of tens of millions. Pragmatic and resourceful, James is drawn to viral hooks and quick pitches—he admits he's the sort to click on risky links when an opportunity smells promising—yet his reliable craftsmanship and straight-to-the-point style have earned him a reputation that keeps him afloat in 2087's lean gig economy."
+  }
+]
