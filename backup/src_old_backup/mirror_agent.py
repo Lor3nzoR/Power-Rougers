@@ -25,27 +25,27 @@ load_dotenv()
 # SETUP LANGFUSE & OPENAI
 # =============================================================
 os.environ.setdefault("LANGFUSE_HOST", "https://challenges.reply.com/langfuse")
-
 from langfuse.openai import OpenAI
-from langfuse import observe, get_client, propagate_attributes # <--- Aggiunto propagate_attributes
+from langfuse import observe, get_client, propagate_attributes
 
+# Inizializza il client di Langfuse
 langfuse = get_client()
 
 MODELS = {
-    "big":   "anthropic/claude-sonnet-4.5",       
-    "cheap": "google/gemini-2.5-flash-lite",      
-    "ctx":   "google/gemini-2.5-flash",           
-    "arb":   "openai/gpt-5-mini",                 
+    "big":   "anthropic/claude-sonnet-4.5",       # orchestrator / single-shot su dataset piccoli
+    "cheap": "google/gemini-2.5-flash-lite",      # worker batch su dataset grandi
+    "ctx":   "google/gemini-2.5-flash",           # context fusion (lettura SMS/mail)
+    "arb":   "openai/gpt-5-mini",                 # arbiter cost-sensitive
 }
 
 client = OpenAI(base_url="https://openrouter.ai/api/v1",
                 api_key=os.environ["OPENROUTER_API_KEY"])
 
-@observe(as_type="span") # <--- Trasformato in span, perché OpenAI genera già la "generation"
+@observe(as_type="span")
 def llm(model, system, user, session_id, name=None, json_mode=True, max_tokens=None):
     lf = get_client()
     
-    # Rinominiamo lo span corrente usando il nuovo metodo della v4
+    # Rinominiamo lo span corrente per leggerlo bene in dashboard
     custom_name = name or model.split("/")[-1]
     lf.update_current_span(name=custom_name)
     
@@ -60,16 +60,16 @@ def llm(model, system, user, session_id, name=None, json_mode=True, max_tokens=N
     if max_tokens: 
         kwargs["max_tokens"] = max_tokens
         
-    # In Langfuse v4+ il session_id si propaga tramite context manager
+    # Propaga il session_id alla chiamata di OpenAI (Generation)
     with propagate_attributes(session_id=session_id):
         return client.chat.completions.create(**kwargs).choices[0].message.content
+
 
 # =============================================================
 # 1. LOADING (schema reale)
 # =============================================================
 
 def load_dataset(ds_path: Path) -> Dict[str, Any]:
-    """Carica tutto. Gestisce file mancanti gracefully (non tutti i livelli hanno tutto)."""
     def _maybe_json(name):
         p = ds_path / name
         return json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
@@ -84,7 +84,6 @@ def load_dataset(ds_path: Path) -> Dict[str, Any]:
     sms = _maybe_json("sms.json")
     mails = _maybe_json("mails.json")
 
-    # Normalizza locations in DataFrame per lookup veloce
     if locations:
         loc_df = pd.DataFrame(locations)
         loc_df["timestamp"] = pd.to_datetime(loc_df["timestamp"], errors="coerce")
@@ -93,12 +92,10 @@ def load_dataset(ds_path: Path) -> Dict[str, Any]:
     else:
         loc_df = pd.DataFrame()
 
-    # Index users by IBAN (l'unico identifier stabile) e derive biotag mapping
     iban_to_user = {}
     for u in users:
         if u.get("iban"): iban_to_user[u["iban"]] = u
 
-    # sender_id ↔ biotag quando coincidono (il citizen è sia nelle tx che nelle locations)
     biotags = set(loc_df["biotag"].unique()) if len(loc_df) else set()
 
     return dict(tx=tx, users=users, locations=loc_df, sms=sms, mails=mails,
@@ -106,7 +103,7 @@ def load_dataset(ds_path: Path) -> Dict[str, Any]:
 
 
 # =============================================================
-# 2. FEATURE ENGINEERING (sempre utile anche a dataset piccolo)
+# 2. FEATURE ENGINEERING
 # =============================================================
 
 def compute_features(data: Dict[str, Any]) -> pd.DataFrame:
@@ -115,12 +112,10 @@ def compute_features(data: Dict[str, Any]) -> pd.DataFrame:
     biotags = data["biotags"]
     iban_to_user = data["iban_to_user"]
 
-    # Time features
     tx["hour"] = tx["timestamp"].dt.hour.fillna(-1).astype(int)
     tx["is_night"] = tx["hour"].between(0, 5) | (tx["hour"] == 23)
     tx["dow"] = tx["timestamp"].dt.dayofweek.fillna(-1).astype(int)
 
-    # Amount z-score per sender
     sstats = tx.groupby("sender_id")["amount"].agg(["mean","std","count"])
     sstats.columns = ["sender_mean","sender_std","sender_count"]
     tx = tx.merge(sstats, left_on="sender_id", right_index=True, how="left")
@@ -128,10 +123,8 @@ def compute_features(data: Dict[str, Any]) -> pd.DataFrame:
     tx["amount_z"] = ((tx["amount"] - tx["sender_mean"]) /
                       tx["sender_std"].replace(0, np.nan).fillna(std_fb)).fillna(0)
 
-    # Balance anomaly
     tx["balance_negative"] = tx["balance_after"].fillna(0) < 0
 
-    # IBAN cross-border (primi 2 char)
     def _cb(r):
         s,rc = r.get("sender_iban"), r.get("recipient_iban")
         if isinstance(s,str) and isinstance(rc,str) and len(s)>=2 and len(rc)>=2:
@@ -139,11 +132,9 @@ def compute_features(data: Dict[str, Any]) -> pd.DataFrame:
         return False
     tx["iban_cross_border"] = tx.apply(_cb, axis=1)
 
-    # Sender is a tracked citizen?
     tx["sender_is_citizen"] = tx["sender_id"].isin(biotags)
     tx["recipient_is_citizen"] = tx["recipient_id"].isin(biotags)
 
-    # Amount vs sender's salary (se citizen)
     def _salary(iban):
         u = iban_to_user.get(iban)
         return u.get("salary") if u else None
@@ -152,12 +143,10 @@ def compute_features(data: Dict[str, Any]) -> pd.DataFrame:
         lambda r: r["amount"] / (r["sender_salary"]/12) if r["sender_salary"] else np.nan, axis=1
     )
 
-    # Geo mismatch: in-person payment con location != GPS del citizen a quel timestamp
     def _geo_mismatch(row):
         if not isinstance(row["location"], str) or pd.isna(row["location"]): return False
         if not row["sender_is_citizen"]: return False
         if not len(loc_df): return False
-        # trova il punto GPS più vicino in tempo per quel biotag
         same = loc_df[loc_df["biotag"] == row["sender_id"]]
         if not len(same): return False
         delta = (same["timestamp"] - row["timestamp"]).abs()
@@ -167,7 +156,6 @@ def compute_features(data: Dict[str, Any]) -> pd.DataFrame:
                row["location"].lower() not in closest["city"].lower()
     tx["geo_mismatch"] = tx.apply(_geo_mismatch, axis=1)
 
-    # Composite risk score (pesi iniziali, da tunare)
     tx["risk_score"] = (
           (tx["amount_z"].abs() > 2).astype(int) * 2
         + (tx["amount_z"].abs() > 4).astype(int) * 2
@@ -182,7 +170,7 @@ def compute_features(data: Dict[str, Any]) -> pd.DataFrame:
 
 
 # =============================================================
-# 3. CONTEXT BUNDLE (user profiles + SMS/mail summary)
+# 3. CONTEXT BUNDLE
 # =============================================================
 
 def build_user_profiles(data) -> str:
@@ -203,13 +191,10 @@ def build_user_profiles(data) -> str:
 
 
 def summarize_comms(data, session_id) -> str:
-    """Se i mail/sms sono pochi → li passiamo raw sintetizzati;
-       se sono tanti → mandiamo un LLM cheap a estrarre segnali."""
     sms = data["sms"]
     mails = data["mails"]
     if not sms and not mails: return "No communications available."
 
-    # Su dataset 1 (162 sms, 8 mail) stiamo sotto i 40k token tranquilli
     sample_sms = [s["sms"][:300] for s in sms[:40]]
     sample_mails = [m["mail"][:800] for m in mails[:10]]
     payload = json.dumps({"sms_samples": sample_sms, "mail_samples": sample_mails}, ensure_ascii=False)
@@ -227,13 +212,13 @@ extract signals relevant to fraud detection. Return ONLY JSON:
 
 
 # =============================================================
-# 4. SINGLE-PASS REVIEWER (dataset piccoli) / BATCH MODE (grandi)
+# 4. SYSTEM PROMPTS
 # =============================================================
 
 REVIEWER_SYS = """You are the lead fraud-detection agent. You receive:
-- user_profiles: 1-3 citizens with salary, job, residence, behavioral description
-- comms_summary: signals extracted from their SMS/emails (phishing indicators, known legitimate counterparties)
-- transactions: list of ALL transactions (each with features + free-text description)
+- user_profiles: citizens with salary, job, residence
+- comms_summary: signals extracted from their SMS/emails
+- transactions: list of ALL transactions
 
 Output ONLY JSON:
 {
@@ -243,19 +228,42 @@ Output ONLY JSON:
 }
 
 Judge each transaction on:
-1. Coherence with user profile (e.g. 40yo office clerk on 34k€ suddenly wires 2500€ to a foreign IBAN at 3am with vague description → suspicious)
-2. The `description` field — normal ones say "Salary", "Rent", "Groceries". Fraud often has generic/missing/off-topic descriptions
-3. Counterparty legitimacy — recipients mentioned positively in comms_summary are likely legitimate; new foreign IBANs are suspicious
-4. geo_mismatch = true is a STRONG signal (GPS places citizen elsewhere)
-5. iban_cross_border alone is not enough; combined with other flags yes
-6. Economic asymmetry: be readier to flag high-amount borderline cases
+1. Coherence with user profile
+2. The `description` field
+3. Counterparty legitimacy (recipients mentioned positively in comms are likely legitimate)
+4. geo_mismatch = true is a STRONG signal
+5. Economic asymmetry
 
 Constraints:
 - Never flag >40% of transactions
-- Never flag 0 transactions (if truly nothing is off, flag the single most anomalous)
-- Aim for precision; false positives cost too
+- Never flag 0 transactions
+- Aim for precision
 """
 
+WORKER_SYS = """You are a junior fraud-detection worker. You receive user profiles, a comms summary, and a batch of transactions.
+Your job is to FLAG ANY potentially suspicious transaction. Be slightly aggressive in your flagging; a senior arbiter will review your choices.
+Pay attention to: geo_mismatch, negative balances, and high amount_z.
+Output ONLY JSON:
+{
+  "flagged": [
+    {"tx_id": "...", "confidence": 0.0-1.0, "reason": "<10 words>"}
+  ]
+}"""
+
+ARBITER_SYS = """You are the Lead Fraud Arbiter. A junior agent has flagged the following transactions as potentially fraudulent.
+Review these specific transactions against the user profiles and communications summary.
+Your job is to FILTER OUT false positives. Keep ONLY the genuinely suspicious ones based on economic asymmetry, context, and behavioral anomalies. 
+Aim for high precision. Output ONLY JSON:
+{
+  "flagged": [
+    {"tx_id": "...", "confidence": 0.0-1.0, "reason": "<15 words>"}
+  ]
+}"""
+
+
+# =============================================================
+# 5. EXECUTION MODES (SINGLE & BATCH)
+# =============================================================
 
 def run_single_pass(feats: pd.DataFrame, profiles: str, comms: str, session_id: str) -> List[dict]:
     cols = ["transaction_id","sender_id","recipient_id","transaction_type","amount","location",
@@ -269,15 +277,11 @@ def run_single_pass(feats: pd.DataFrame, profiles: str, comms: str, session_id: 
     tx_records["timestamp"] = tx_records["timestamp"].astype(str)
     tx_list = tx_records.to_dict(orient="records")
 
-    # --- INIZIO NUOVO BLOCCO ANTI-CRASH PER I DATI IN INGRESSO ---
-    
-    # 1. Parsing sicuro per i profili
     try:
         parsed_profiles = json.loads(profiles)
     except Exception:
         parsed_profiles = profiles
 
-    # 2. Parsing sicuro per il riassunto comunicazioni (comms)
     comms_clean = comms.strip()
     if comms_clean.startswith("```"):
         comms_clean = "\n".join(comms_clean.split("\n")[1:-1]).strip()
@@ -288,18 +292,14 @@ def run_single_pass(feats: pd.DataFrame, profiles: str, comms: str, session_id: 
         print("\n[WARN] Il summary di Gemini non è un JSON perfetto. Lo passo a Claude come testo grezzo.")
         parsed_comms = comms_clean
 
-    # 3. Creazione del payload finale a prova di crash
     payload = json.dumps({
         "user_profiles": parsed_profiles,
         "comms_summary": parsed_comms,
         "transactions": tx_list,
     }, ensure_ascii=False)
-    
-    # --- FINE NUOVO BLOCCO ---
 
     raw = llm(MODELS["big"], REVIEWER_SYS, payload, session_id, name="single-pass-reviewer")
     
-    # --- BLOCCO ANTI-CRASH PER L'OUTPUT DI CLAUDE (che avevi già messo) ---
     raw_clean = raw.strip()
     if raw_clean.startswith("```"):
         raw_clean = "\n".join(raw_clean.split("\n")[1:-1]).strip()
@@ -313,8 +313,86 @@ def run_single_pass(feats: pd.DataFrame, profiles: str, comms: str, session_id: 
         return []
 
 
+def run_batch_mode(feats: pd.DataFrame, profiles: str, comms: str, session_id: str) -> List[dict]:
+    cols = ["transaction_id","sender_id","recipient_id","transaction_type","amount","location",
+            "sender_iban","recipient_iban","balance_after","description","timestamp",
+            "hour","is_night","amount_z","balance_negative","iban_cross_border",
+            "sender_is_citizen","geo_mismatch","amount_vs_monthly_salary","risk_score"]
+    cols = [c for c in cols if c in feats.columns]
+    tx_records = feats[cols].copy()
+    for c in tx_records.select_dtypes("float").columns:
+        tx_records[c] = tx_records[c].round(3)
+    tx_records["timestamp"] = tx_records["timestamp"].astype(str)
+    tx_list = tx_records.to_dict(orient="records")
+
+    try:
+        parsed_profiles = json.loads(profiles)
+    except Exception:
+        parsed_profiles = profiles
+
+    comms_clean = comms.strip()
+    if comms_clean.startswith("```"):
+        comms_clean = "\n".join(comms_clean.split("\n")[1:-1]).strip()
+    try:
+        parsed_comms = json.loads(comms_clean)
+    except json.JSONDecodeError:
+        parsed_comms = comms_clean
+
+    # 1. FASE WORKER: Chunking
+    CHUNK_SIZE = 150
+    worker_flags = []
+    
+    print(f"  [Batch] Avvio fase Worker ({math.ceil(len(tx_list)/CHUNK_SIZE)} chunk)...")
+    for i in range(0, len(tx_list), CHUNK_SIZE):
+        chunk = tx_list[i:i+CHUNK_SIZE]
+        payload = json.dumps({
+            "user_profiles": parsed_profiles,
+            "comms_summary": parsed_comms,
+            "transactions": chunk,
+        }, ensure_ascii=False)
+        
+        raw = llm(MODELS["cheap"], WORKER_SYS, payload, session_id, name=f"worker-chunk-{i//CHUNK_SIZE}")
+        
+        raw_clean = raw.strip()
+        if raw_clean.startswith("```"):
+            raw_clean = "\n".join(raw_clean.split("\n")[1:-1]).strip()
+            
+        try:
+            data = json.loads(raw_clean)
+            worker_flags.extend(data.get("flagged", []))
+        except json.JSONDecodeError:
+            print(f"  [WARN] Il Worker (chunk {i//CHUNK_SIZE}) ha fallito la generazione JSON.")
+
+    print(f"  [Batch] I Worker hanno sollevato {len(worker_flags)} possibili frodi. Passo all'Arbitro...")
+    if not worker_flags:
+        return []
+
+    # 2. FASE ARBITER: Sintesi finale
+    flagged_ids = {f.get("tx_id") for f in worker_flags if f.get("tx_id")}
+    arbiter_tx = [t for t in tx_list if t["transaction_id"] in flagged_ids]
+    
+    payload_arbiter = json.dumps({
+        "user_profiles": parsed_profiles,
+        "comms_summary": parsed_comms,
+        "flagged_transactions_to_review": arbiter_tx,
+    }, ensure_ascii=False)
+    
+    raw_arb = llm(MODELS["arb"], ARBITER_SYS, payload_arbiter, session_id, name="arbiter-review")
+    
+    raw_arb_clean = raw_arb.strip()
+    if raw_arb_clean.startswith("```"):
+        raw_arb_clean = "\n".join(raw_arb_clean.split("\n")[1:-1]).strip()
+        
+    try:
+        final_data = json.loads(raw_arb_clean)
+        return final_data.get("flagged", [])
+    except json.JSONDecodeError:
+        print("\n[ERRORE CRITICO] L'Arbiter non ha restituito un JSON valido. Ricado sui flag dei worker.")
+        return worker_flags
+
+
 # =============================================================
-# 5. MAIN
+# 6. MAIN
 # =============================================================
 
 def main():
@@ -349,14 +427,14 @@ def main():
         flagged = run_single_pass(feats, profiles, comms, args.session_id)
 
     else:
-        # batch mode — riusa la pipeline v1 (screening + worker + arbiter)
-        # placeholder: fall back to a simple top-risk selection
-        raise NotImplementedError("Batch mode: reuse the v1 skeleton (orchestrator+worker+arbiter)")
+        profiles = build_user_profiles(data)
+        comms = summarize_comms(data, args.session_id) if (data["sms"] or data["mails"]) else "{}"
+        flagged = run_batch_mode(feats, profiles, comms, args.session_id)
 
-    # Safety net
+    # Safety net e deduplicazione
     ids_all = set(data["tx"]["transaction_id"])
     final = [f["tx_id"] for f in flagged if f.get("tx_id") in ids_all]
-    final = list(dict.fromkeys(final))  # dedupe
+    final = list(dict.fromkeys(final))  
 
     if not final:
         print("[WARN] Empty flag list. Fallback to top-risk 10%.")
