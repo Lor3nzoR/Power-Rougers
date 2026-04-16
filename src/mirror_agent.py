@@ -269,28 +269,47 @@ def run_single_pass(feats: pd.DataFrame, profiles: str, comms: str, session_id: 
     tx_records["timestamp"] = tx_records["timestamp"].astype(str)
     tx_list = tx_records.to_dict(orient="records")
 
+    # --- INIZIO NUOVO BLOCCO ANTI-CRASH PER I DATI IN INGRESSO ---
+    
+    # 1. Parsing sicuro per i profili
+    try:
+        parsed_profiles = json.loads(profiles)
+    except Exception:
+        parsed_profiles = profiles
+
+    # 2. Parsing sicuro per il riassunto comunicazioni (comms)
+    comms_clean = comms.strip()
+    if comms_clean.startswith("```"):
+        comms_clean = "\n".join(comms_clean.split("\n")[1:-1]).strip()
+        
+    try:
+        parsed_comms = json.loads(comms_clean)
+    except json.JSONDecodeError:
+        print("\n[WARN] Il summary di Gemini non è un JSON perfetto. Lo passo a Claude come testo grezzo.")
+        parsed_comms = comms_clean
+
+    # 3. Creazione del payload finale a prova di crash
     payload = json.dumps({
-        "user_profiles": json.loads(profiles) if profiles.startswith("[") else profiles,
-        "comms_summary": json.loads(comms) if comms.strip().startswith("{") else comms,
+        "user_profiles": parsed_profiles,
+        "comms_summary": parsed_comms,
         "transactions": tx_list,
     }, ensure_ascii=False)
+    
+    # --- FINE NUOVO BLOCCO ---
 
     raw = llm(MODELS["big"], REVIEWER_SYS, payload, session_id, name="single-pass-reviewer")
     
-    # 1. Pulizia stringa: rimuove spazi vuoti e blocchi markdown
+    # --- BLOCCO ANTI-CRASH PER L'OUTPUT DI CLAUDE (che avevi già messo) ---
     raw_clean = raw.strip()
     if raw_clean.startswith("```"):
-        # Rimuove la prima riga (es. ```json) e l'ultima riga (es. ```)
         raw_clean = "\n".join(raw_clean.split("\n")[1:-1]).strip()
         
-    # 2. Parsing sicuro con fallback
     try:
         data_json = json.loads(raw_clean)
         return data_json.get("flagged", [])
     except json.JSONDecodeError:
         print(f"\n[ERRORE CRITICO] Il modello non ha restituito un JSON valido.")
         print(f"Output grezzo ricevuto:\n{raw}\n")
-        # In caso di panico, ritorniamo lista vuota per far scattare la safety net del risk_score
         return []
 
 
